@@ -19,7 +19,7 @@ module Geojson
       local = local_file_name(remote)
       downloaded = false
 
-      Rails.logger.info("Download file #{remote} into #{local}")
+      Geojson.logger.info("Download file #{remote} into #{local}")
 
       req = Net::HTTP::Get.new(uri.request_uri)
       req['If-Modified-Since'] = File.stat(local).mtime.rfc2822 if File.exists?(local)
@@ -33,11 +33,11 @@ module Geojson
               end
             end
             downloaded = true
-            Rails.logger.info(" File download complete")
+            Geojson.logger.info(" File download complete")
           elsif response.is_a?(Net::HTTPNotModified)
-            Rails.logger.info(" File was not modified")
+            Geojson.logger.info(" File was not modified")
           else
-            Rails.logger.warn(" Error downloading file from #{remote}: #{response.status}")
+            Geojson.logger.warn(" Error downloading file from #{remote}: #{response.status}")
           end
         end
       end

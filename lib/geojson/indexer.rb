@@ -21,9 +21,9 @@ module Geojson
     def delete_index
       if client.indices.exists(index: index_name)
         client.indices.delete index: index_name
-        Rails.logger.info "Deleted locations index #{index_name}"
+        Geojson.logger.info "Deleted locations index #{index_name}"
       else
-        Rails.logger.info "No locations index #{index_name} found"
+        Geojson.logger.info "No locations index #{index_name} found"
       end
     end
 
@@ -44,7 +44,7 @@ module Geojson
           }
         }
       }
-      Rails.logger.info "Created index #{index_name}"
+      Geojson.logger.info "Created index #{index_name}"
     end
 
 
@@ -56,7 +56,7 @@ module Geojson
 
 
     def index_tree(locations_tree)
-      Rails.logger.info "Indexing locations in #{locations_tree.first.name}"
+      Geojson.logger.info "Indexing locations in #{locations_tree.first.name}"
       locations_tree.in_groups_of(50).each do |batch|
         begin
           batch.compact!
@@ -65,9 +65,9 @@ module Geojson
             { index: { data: data, _id: location.geo_id } }
           end)
         rescue => ex
-          Rails.logger.error "  -> error indexing batch #{batch[0].name} to #{batch[-1].name}: #{ex}"
+          Geojson.logger.error "  -> error indexing batch #{batch[0].name} to #{batch[-1].name}: #{ex}"
         else
-          Rails.logger.info "  -> indexed locations batch #{batch[0].name} to #{batch[-1].name}"
+          Geojson.logger.info "  -> indexed locations batch #{batch[0].name} to #{batch[-1].name}"
         end
       end
     end
@@ -101,7 +101,7 @@ module Geojson
       if location_or_locations.kind_of?(Location)
         location = location_or_locations
         result = client.search(index: @index_name, body: validate_center_query(location))
-        Rails.logger.warn("Location #{location.name} (#{location.id}) has a center #{location.center} outside of its polygon") if result["hits"]["total"] == 0
+        Geojson.logger.warn("Location #{location.name} (#{location.id}) has a center #{location.center} outside of its polygon") if result["hits"]["total"] == 0
       else
         location_or_locations.each { |l| l.shape && validate_center(l) }
       end
