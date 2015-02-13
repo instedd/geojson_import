@@ -8,8 +8,7 @@ Gem::Specification.new do |spec|
   spec.version       = Geojson::VERSION
   spec.authors       = ["Franco Leonardo Bulgarelli"]
   spec.email         = ["fbulgarelli@manas.com.ar"]
-  spec.summary       = %q{TODO: Write a short summary. Required.}
-  spec.description   = %q{TODO: Write a longer description. Optional.}
+  spec.summary       = "Download and import GADM Geojson"
   spec.homepage      = ""
   spec.license       = "MIT"
 
