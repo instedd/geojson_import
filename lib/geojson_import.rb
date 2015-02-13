@@ -1,4 +1,4 @@
-require "geojson/version"
+require "geojson_import/version"
 
 module Geojson
 
