@@ -8,10 +8,12 @@ require 'geojson_import/indexer'
 require 'geojson_import/point_checker'
 require 'geojson_import/point_collector'
 
+require 'logger'
+
 module Geojson
 
   def self.logger
-    @logger ||= ActiveSupport::Logger.new
+    @logger ||= Logger.new(STDOUT)
   end
 
 end
