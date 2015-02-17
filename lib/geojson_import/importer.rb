@@ -57,15 +57,8 @@ module Geojson
 
     def update_location(feature, location)
       begin
-        location.update_attributes!(lat: feature.center[1], lng: feature.center[1])
-
-        if location.shape.nil?
-          location.create_shape!(feature.as_location_shape_attributes)
-          Geojson.logger.info "  -> updated location #{location.name} #{location.id} with new shape from feature #{feature.location_id}"
-        else
-          location.shape.update_attributes!(feature.as_location_shape_attributes)
-          Geojson.logger.info "  -> updated location #{location.name} #{location.id} shape #{location.shape.id} from feature #{feature.location_id}"
-        end
+        location.update_from_geojson!(feature)
+        Geojson.logger.info " -> updated location #{feature.name}"
       rescue => ex
         Geojson.logger.error "  -> exception updating location #{location.id} for feature #{feature.name} #{feature.location_id}: #{ex}"
         @failed += 1
