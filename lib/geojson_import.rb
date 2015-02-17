@@ -13,7 +13,7 @@ require 'logger'
 module Geojson
 
   def self.logger
-    @logger ||= Logger.new(STDOUT)
+    @logger ||= Rails.logger rescue Logger.new(STDOUT)
   end
 
 end
