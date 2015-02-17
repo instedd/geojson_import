@@ -45,15 +45,8 @@ module Geojson
           Geojson.logger.info "  -> location #{feature.name} has no parent id and is considered a root"
         end
 
-        shape = LocationShape.new feature.as_location_shape_attributes
+        Location.create_from_geojson!(parent, feature)
 
-        Location.create!\
-          name: feature.name,
-          geo_id: feature.location_id,
-          lat: feature.center[1],
-          lng: feature.center[0],
-          parent: parent,
-          shape: shape
       rescue => ex
         Geojson.logger.error "  -> exception creating location for feature #{feature.name} #{feature.location_id}: #{ex}"
         @failed += 1
