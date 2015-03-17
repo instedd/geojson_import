@@ -9,12 +9,14 @@ module Geojson
       @created = 0
       @updated = 0
       @failed = 0
+      @csvdata = {}
     end
 
     def import!
       Geojson.logger.warn "No files provided for importing." if filenames.blank?
       filenames.sort.map do |filename|
         Geojson.logger.info "Processing file: #{filename}"
+        load_csv_for(filename)
         FeatureCollection.from_path(filename).features do |feature|
           import_feature(feature)
         end
@@ -23,8 +25,9 @@ module Geojson
     end
 
     def import_feature(feature)
-      Geojson.logger.info "  #{feature.name} (id: #{feature.location_id}) at #{feature.center}"
+      Geojson.logger.info " #{feature.name} (id: #{feature.location_id}) at #{feature.center}"
       existing = Location.where(geo_id: feature.location_id).first
+      merge_csv_data(feature)
 
       if existing.nil?
         create_location(feature)
@@ -58,12 +61,40 @@ module Geojson
     def update_location(feature, location)
       begin
         location.update_from_geojson!(feature)
-        Geojson.logger.info " -> updated location #{feature.name}"
+        Geojson.logger.info "  -> updated location #{feature.name}"
       rescue => ex
         Geojson.logger.error "  -> exception updating location #{location.id} for feature #{feature.name} #{feature.location_id}: #{ex}"
         @failed += 1
       else
         @updated += 1
+      end
+    end
+
+    def load_csv_for(filename)
+      csvfile = filename.gsub(/\..+$/, '.csv')
+      if File.exist?(csvfile)
+        Geojson.logger.info "Loading csv file with names from #{csvfile}"
+        CSV.foreach(csvfile, headers: true) do |row|
+          @csvdata[csv_id(row)] = row
+        end
+      else
+        @csvdata = {}
+      end
+    end
+
+    def csv_id(row)
+      (0..4).map{|i| row["ID_#{i}"]}.compact.join('_')
+    end
+
+    def merge_csv_data(feature)
+      data = @csvdata[feature.location_id]
+      return if not data
+
+      name = data["NAME_#{feature.level}"] || (feature.level == 0 && data["NAME_ENGLI"])
+      unless name.blank?
+        name.gsub!(/<U\+([A-F0-9]+)>/) {|match| [$1.hex].pack('U')}
+        Geojson.logger.info "  -> using name #{name} from CSV"
+        feature.name = name
       end
     end
 
