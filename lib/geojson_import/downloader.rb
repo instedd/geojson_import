@@ -2,8 +2,9 @@ module Geojson
 
   class Downloader
 
-    def initialize(files)
+    def initialize(files, local_folder = "etc/shapes")
       @files = files
+      @local_folder = local_folder
     end
 
     def download!
@@ -11,7 +12,7 @@ module Geojson
     end
 
     def local_file_name(remote)
-      File.join(Rails.root, 'etc/shapes', URI(remote).path.split('/').last)
+      File.join(Rails.root, @local_folder, URI(remote).path.split('/').last)
     end
 
     def download_file(remote)
