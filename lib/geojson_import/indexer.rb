@@ -96,17 +96,18 @@ module Geojson
       return attributes
     end
 
-
     def validate_center(location_or_locations)
       if location_or_locations.kind_of?(Location)
         location = location_or_locations
         result = client.search(index: @index_name, body: validate_center_query(location))
-        Geojson.logger.warn("Location #{location.name} (#{location.id}) has a center #{location.center} outside of its polygon") if result["hits"]["total"] == 0
+        hits = result["hits"]["hits"].map{ |h| h['_id']}
+
+        log_missing_hits(location, hits)
+        log_extra_hits(location, hits)
       else
         location_or_locations.each { |l| l.shape && validate_center(l) }
       end
     end
-
 
     def validate_center_query(location)
       {
@@ -118,8 +119,8 @@ module Geojson
             "filter" => {
               "and" => [
                 {
-                  "term" => {
-                    "location_id" => location.id
+                  "range" => {
+                    "level" => { "lte" => location.depth }
                   },
                 },
                 {
@@ -137,6 +138,38 @@ module Geojson
           }
         }
       }
+    end
+
+    #
+    # Returns the geo_id of all locations expected to contain the
+    # center of a given location.
+    #
+    # example: ["209_1_34"] ~~> ["209", "209_1", "209_1_34"]
+    #
+    def expected_hits(location)
+      parts = location.geo_id.split('_')
+      fst = parts.shift
+      parts.inject([fst]) { |r,x| r << "#{r.last}_#{x}" }
+    end
+
+    def log_missing_hits(location, hits)
+      missing_hits = expected_hits(location) - hits
+      if missing_hits.any?
+        if missing_hits.delete(location.geo_id)
+          Geojson.logger.warn("Location #{location.name} (#{location.id}) has a center #{location.center} outside of its polygon")
+        end
+
+        missing_hit_names = Location.where(geo_id: missing_hits).pluck(:name)
+        Geojson.logger.warn("Location #{location.name} (#{location.id}) has a center #{location.center} outside of #{'parent'.pluralize(missing_hits.length)} #{missing_hit_names.to_sentence}")
+      end
+    end
+
+    def log_extra_hits(location, hits)
+      extra_hits = hits - expected_hits(location)
+      if extra_hits.any?
+        extra_hit_names = Location.where(geo_id: extra_hits).pluck(:name)
+        Geojson.logger.warn("Location #{location.name} (#{location.id}) has a center #{location.center} inside non #{'parent'.pluralize(extra_hits.length)} #{extra_hit_names.to_sentence}")
+      end
     end
 
   end
