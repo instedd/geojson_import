@@ -96,6 +96,12 @@ module Geojson
         Geojson.logger.info "  -> using name #{name} from CSV"
         feature.name = name
       end
+
+      center = [data["CENTER_LNG"], data["CENTER_LAT"]]
+      if center.all?(&:present?)
+        Geojson.logger.info "  -> using center #{center} from CSV"
+        feature.center = center.map(&:to_f)
+      end
     end
 
   end

@@ -60,7 +60,7 @@ module Geojson
           feature.level = 0
         end
 
-        feature.center = PointCollector.compute_center(feature.coordinates)
+        feature.center = properties["CENTER"] || PointCollector.compute_center(feature.coordinates)
 
         yield feature
 
