@@ -52,11 +52,11 @@ module Geojson
         elsif id1
           feature.name = name1
           feature.location_id = "#{id0}_#{id1}"
-          feature.parent_id = id0
+          feature.parent_id = "#{id0}"
           feature.level = 1
         else
           feature.name = name0
-          feature.location_id = id0
+          feature.location_id = "#{id0}"
           feature.level = 0
         end
 
