@@ -2,35 +2,31 @@ module Geojson
 
   class PointCollector
     def initialize
-      @min_lat = 90
-      @max_lat = -90
-      @min_lng = 180
-      @max_lng = -180
+      @points = []
     end
 
     def <<(point)
-      lng, lat = point
-      if not_first_iteration && (lng < @min_lng && (@min_lng - lng) > 180)
-        lng = lng + 360
-      end
-      if not_first_iteration && (lng > @max_lng && (@max_lng - lng) < -180)
-        lng = lng - 360
-      end
-      @min_lat = lat if lat < @min_lat
-      @max_lat = lat if lat > @max_lat
-      @min_lng = lng if lng < @min_lng
-      @max_lng = lng if lng > @max_lng
+      @points.push point
     end
 
-    def not_first_iteration
-      @min_lng != 180 && @max_lng != -180
-    end
-
+    # Based on https://en.wikipedia.org/wiki/Centroid#Centroid_of_polygon
+    # See http://stackoverflow.com/questions/22796520/finding-the-center-of-leaflet-polygon
     def center
-      lng = (@min_lng + @max_lng) / 2
-      lng = lng - 360 if lng > 180
-      lng = lng + 360 if lng < -180
-      [lng, (@min_lat + @max_lat) / 2]
+      two_times_signed_area = 0
+      cx_times_6_signed_area = 0
+      cy_times_6_signedArea = 0
+
+      length = @points.length
+
+      (0...@points.length).each do |i|
+        two_sa = modulus_x(i) * modulus_y(i + 1) - modulus_x(i + 1) * modulus_y(i)
+        two_times_signed_area += two_sa
+        cx_times_6_signed_area += (modulus_x(i) + modulus_x(i + 1)) * two_sa
+        cy_times_6_signedArea += (modulus_y(i) + modulus_y(i + 1)) * two_sa
+      end
+
+      six_signed_area = 3 * two_times_signed_area
+      [cx_times_6_signed_area / six_signed_area, cy_times_6_signedArea / six_signed_area]       
     end
 
     def self.compute_center(coords)
@@ -48,6 +44,15 @@ module Geojson
         end
       end
     end
-  end
 
+    private
+    
+    def modulus_x(i)
+      @points[i % @points.length][0]
+    end
+
+    def modulus_y(i)
+      @points[i % @points.length][1]
+    end
+  end
 end
