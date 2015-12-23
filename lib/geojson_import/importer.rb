@@ -1,6 +1,7 @@
 module Geojson
 
   class Importer
+    include Geojson::CSVImport
 
     attr_reader :filenames
 
@@ -9,7 +10,6 @@ module Geojson
       @created = 0
       @updated = 0
       @failed = 0
-      @csvdata = {}
     end
 
     def import!
@@ -68,22 +68,6 @@ module Geojson
       else
         @updated += 1
       end
-    end
-
-    def load_csv_for(filename)
-      csvfile = filename.gsub(/\..+$/, '.csv')
-      if File.exist?(csvfile)
-        Geojson.logger.info "Loading csv file with names from #{csvfile}"
-        CSV.foreach(csvfile, headers: true) do |row|
-          @csvdata[csv_id(row)] = row
-        end
-      else
-        @csvdata = {}
-      end
-    end
-
-    def csv_id(row)
-      (0..4).map{|i| row["ID_#{i}"]}.compact.join('_')
     end
 
     def merge_csv_data(feature)

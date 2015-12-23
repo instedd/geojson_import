@@ -1,5 +1,6 @@
 require 'geojson_import/version'
 
+require 'geojson_import/csv_import'
 require 'geojson_import/downloader'
 require 'geojson_import/feature'
 require 'geojson_import/feature_collection'
